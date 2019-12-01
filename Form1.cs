@@ -41,8 +41,8 @@ namespace AdventOfCode2019
 
             IEnumerable<Option> YieldOptions(DayBase day)
             {
-                yield return new Option { Name = $"{day.Name}.1", Run = day.Part1 };
-                yield return new Option { Name = $"{day.Name}.2", Run = day.Part2 };
+                yield return new Option { Name = $"{day.Name}.1", Run = day.Part1, Test = day.Part1Test };
+                yield return new Option { Name = $"{day.Name}.2", Run = day.Part2, Test = day.Part2Test };
             }
         }
 
@@ -50,11 +50,12 @@ namespace AdventOfCode2019
         {
             public string Name { get; set; }
             public Func<string, string> Run { get; set; }
+            public Action Test { get; set; }
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            e.Result = Options[comboBox1.SelectedIndex].Run(txtInput.Text);
+            e.Result = selectedOption.Run(txtInput.Text);
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -62,5 +63,13 @@ namespace AdventOfCode2019
             txtOutput.Text = (string) e.Result;
             comboBox1.Enabled = button1.Enabled = true;
         }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            selectedOption = Options[comboBox1.SelectedIndex];
+            selectedOption.Test();
+        }
+
+        private Option selectedOption;
     }
 }

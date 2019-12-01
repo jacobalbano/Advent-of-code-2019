@@ -8,9 +8,11 @@ namespace AdventOfCode2019.Days
 {
     public abstract class DayBase
     {
-        public abstract void Test();
         public abstract string Part1(string input);
+        public abstract void Part1Test();
+
         public abstract string Part2(string input);
+        public abstract void Part2Test();
 
         protected Stream GetFile(string localFileName)
         {

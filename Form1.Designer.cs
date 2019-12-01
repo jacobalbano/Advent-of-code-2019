@@ -56,6 +56,7 @@
             this.comboBox1.Size = new System.Drawing.Size(625, 21);
             this.comboBox1.TabIndex = 0;
             this.comboBox1.ValueMember = "Run";
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
             // button1
             // 
