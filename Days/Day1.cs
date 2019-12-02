@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,6 +18,15 @@ namespace AdventOfCode2019.Days
                 .Select(FuelForMass)
                 .Sum()
                 .ToString();
+        }
+
+        public List<int> Read(string f_name)
+        {
+            return File.ReadAllLines(f_name)
+                .Select(line => new { Success = int.TryParse(line, out var value), Value = value })
+                .Where(x => x.Success)
+                .Select(x => x.Value)
+                .ToList();
         }
 
         public override string Part2(string input)
