@@ -35,7 +35,9 @@ namespace AdventOfCode2019.Days
 
         public override string Part2(string input)
         {
-            throw new NotImplementedException();
+            var scripts = ParseScript(input);
+            return DistanceToCheapestOverlap(scripts[0], scripts[1])
+                .ToString();
         }
 
         public override void Part2Test()
@@ -50,17 +52,9 @@ namespace AdventOfCode2019.Days
             foreach (var test in testValues)
             {
                 var scripts = ParseScript(test.Input);
-                var best = DistanceToClosestOverlap(scripts[0], scripts[1]);
+                var best = DistanceToCheapestOverlap(scripts[0], scripts[1]);
                 Debug.Assert(best == test.Output);
             }
-        }
-
-        private static Move[][] ParseScript(string input)
-        {
-            return input
-                .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Split(',').Select(Move.Parse).ToArray())
-                .ToArray();
         }
 
         private static int DistanceToClosestOverlap(Move[] redWire, Move[] blueWire)
@@ -74,6 +68,49 @@ namespace AdventOfCode2019.Days
                 orderby distance ascending
                 select distance
             ).First();
+        }
+
+        private int DistanceToCheapestOverlap(Move[] redWire, Move[] blueWire)
+        {
+            var redLines = WalkWire(redWire).ToList();
+            var blueLines = WalkWire(blueWire).ToList();
+            var routes = new HashSet<int>();
+
+            int redLength = 0;
+            foreach (var red in redLines)
+            {
+                int blueLength = 0;
+                redLength += red.Length;
+                foreach (var blue in blueLines)
+                {
+                    blueLength += blue.Length;
+                    var point = blue.Intersection(red);
+                    if (point != null)
+                    {
+                        var p = point.Value;
+                        Line h = red.Start.X == red.End.X ? red : blue,
+                            v = red.Start.Y == red.End.Y ? red : blue;
+
+                        routes.Add(
+                            redLength + blueLength -
+                            Math.Abs(h.End.X - v.End.X) - 
+                            Math.Abs(v.End.Y - h.End.Y)
+                        );
+                    }
+                }
+            }
+
+            return routes
+                .OrderBy(x => x)
+                .First();
+        }
+
+        private static Move[][] ParseScript(string input)
+        {
+            return input
+                .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Split(',').Select(Move.Parse).ToArray())
+                .ToArray();
         }
 
         private static IEnumerable<Line> WalkWire(Move[] wire)
@@ -96,6 +133,8 @@ namespace AdventOfCode2019.Days
         private struct Line
         {
             public Position Start, End;
+
+            public int Length => (int) Math.Sqrt(Math.Pow(Start.X - End.X, 2) + Math.Pow(Start.Y - End.Y, 2));
 
             public Position? Intersection(Line other)
             {
