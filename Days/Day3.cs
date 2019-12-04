@@ -40,7 +40,19 @@ namespace AdventOfCode2019.Days
 
         public override void Part2Test()
         {
-            throw new NotImplementedException();
+            var testValues = new[]
+            {
+                new { Input = "R8,U5,L5,D3\nU7,R6,D4,L4", Output = 30},
+                new { Input = "R75,D30,R83,U83,L12,D49,R71,U7,L72\nU62,R66,U55,R34,D71,R55,D58,R83", Output = 610 },
+                new { Input = "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51\nU98,R91,D20,R16,D67,R40,U7,R15,U6,R7", Output = 410 }
+            };
+
+            foreach (var test in testValues)
+            {
+                var scripts = ParseScript(test.Input);
+                var best = DistanceToClosestOverlap(scripts[0], scripts[1]);
+                Debug.Assert(best == test.Output);
+            }
         }
 
         private static Move[][] ParseScript(string input)
@@ -53,26 +65,27 @@ namespace AdventOfCode2019.Days
 
         private static int DistanceToClosestOverlap(Move[] redWire, Move[] blueWire)
         {
-            var cursor = new Position { X = 0, Y = 0 };
-            var visitedPositions = new HashSet<Position>(
-                WalkWire(redWire).Select(x => cursor = cursor.Add(x))
-            );
-
-            cursor = new Position { X = 0, Y = 0 };
-            var intersections = WalkWire(blueWire)
-                .Select(x => cursor = cursor.Add(x))
-                .Where(x => !visitedPositions.Add(x))
-                .ToList();
-
-            return ManhattanFromZero(intersections
-                .OrderBy(ManhattanFromZero)
-                .Where(x => !(x.X == 0 && x.Y == 0))
-                .First());
+            return (
+                from red in WalkWire(redWire)
+                from blue in WalkWire(blueWire)
+                let point = red.Intersection(blue)
+                where point != null
+                let distance = ManhattanFromZero(point.Value)
+                orderby distance ascending
+                select distance
+            ).First();
         }
 
-        private static IEnumerable<Move> WalkWire(Move[] wire)
+        private static IEnumerable<Line> WalkWire(Move[] wire)
         {
-            return wire.SelectMany(x => Enumerable.Range(0, Math.Abs(x.X + x.Y)).Select(y => x));
+            var start = new Position();
+            for (int i = 0; i < wire.Length; ++i)
+            {
+                var move = wire[i];
+                var end = new Position { X = start.X + move.X, Y = start.Y + move.Y };
+                yield return new Line { Start = start, End = end };
+                start = end;
+            }
         }
 
         private static int ManhattanFromZero(Position position)
@@ -80,13 +93,46 @@ namespace AdventOfCode2019.Days
             return Math.Abs(position.X) + Math.Abs(position.Y);
         }
 
+        private struct Line
+        {
+            public Position Start, End;
+
+            public Position? Intersection(Line other)
+            {
+                bool otherVertical = other.Start.X == other.End.X,
+                    thisVertical = Start.X == End.X;
+
+                if (otherVertical == thisVertical) // if both lines are vertical, no intersection
+                    return null;
+
+                Line h = thisVertical ? other : this,
+                    v = otherVertical ? other : this;
+
+                var top = Math.Min(v.End.Y, v.Start.Y);
+                var bottom = Math.Max(v.End.Y, v.Start.Y);
+                var left = Math.Min(h.Start.X, h.End.X);
+                var right = Math.Max(h.Start.X, h.End.X);
+
+                if (h.End.Y > top && h.End.Y < bottom && v.End.X > left && v.End.X < right)
+                    return new Position
+                    {
+                        X = v.End.X,
+                        Y = h.End.Y
+                    }; // STUB
+
+                return null;
+            }
+
+            public override string ToString() => $"({Start}) -> ({End})";
+        }
+
         private struct Position : IEquatable<Position>
         {
             public int X, Y;
-
-            public Position Add(Move move) => new Position { X = X + Math.Sign(move.X), Y = Y + Math.Sign(move.Y) };
-
+            
             #region Impl
+            public static readonly Position Zero = new Position { X = 0, Y = 0 };
+            
             public override int GetHashCode()
             {
                 var hashCode = 1861411795;
@@ -99,11 +145,11 @@ namespace AdventOfCode2019.Days
             public bool Equals(Position other) => X == other.X && Y == other.Y;
             public static bool operator ==(Position left, Position right) => left.Equals(right);
             public static bool operator !=(Position left, Position right) => !(left == right);
-            public override string ToString() => $"{X}, {Y}";
+            public override string ToString() => $"{Y}, {X}";
             #endregion
         }
 
-        private class Move
+        private struct Move
         {
             public int X { get; private set; }
             public int Y { get; private set; }
@@ -121,6 +167,5 @@ namespace AdventOfCode2019.Days
                 }
             }
         }
-
     }
 }
