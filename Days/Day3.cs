@@ -75,8 +75,7 @@ namespace AdventOfCode2019.Days
             return (
                 from red in WalkWire(redWire)
                 from blue in WalkWire(blueWire)
-                let point = red.Intersection(blue)
-                where point != null
+                where red.Intersection(blue) != null
                 let h = red.Start.X == red.End.X ? red : blue
                 let v = red.Start.Y == red.End.Y ? red : blue
                 let steps = red.TotalLength + blue.TotalLength - Math.Abs(h.End.X - v.End.X) - Math.Abs(v.End.Y - h.End.Y)
