@@ -72,37 +72,17 @@ namespace AdventOfCode2019.Days
 
         private int DistanceToCheapestOverlap(Move[] redWire, Move[] blueWire)
         {
-            var redLines = WalkWire(redWire).ToList();
-            var blueLines = WalkWire(blueWire).ToList();
-            var routes = new HashSet<int>();
-
-            int redLength = 0;
-            foreach (var red in redLines)
-            {
-                int blueLength = 0;
-                redLength += red.Length;
-                foreach (var blue in blueLines)
-                {
-                    blueLength += blue.Length;
-                    var point = blue.Intersection(red);
-                    if (point != null)
-                    {
-                        var p = point.Value;
-                        Line h = red.Start.X == red.End.X ? red : blue,
-                            v = red.Start.Y == red.End.Y ? red : blue;
-
-                        routes.Add(
-                            redLength + blueLength -
-                            Math.Abs(h.End.X - v.End.X) - 
-                            Math.Abs(v.End.Y - h.End.Y)
-                        );
-                    }
-                }
-            }
-
-            return routes
-                .OrderBy(x => x)
-                .First();
+            return (
+                from red in WalkWire(redWire)
+                from blue in WalkWire(blueWire)
+                let point = red.Intersection(blue)
+                where point != null
+                let h = red.Start.X == red.End.X ? red : blue
+                let v = red.Start.Y == red.End.Y ? red : blue
+                let steps = red.TotalLength + blue.TotalLength - Math.Abs(h.End.X - v.End.X) - Math.Abs(v.End.Y - h.End.Y)
+                orderby steps ascending
+                select steps
+            ).First();
         }
 
         private static Move[][] ParseScript(string input)
@@ -116,11 +96,14 @@ namespace AdventOfCode2019.Days
         private static IEnumerable<Line> WalkWire(Move[] wire)
         {
             var start = new Position();
+            int length = 0;
             for (int i = 0; i < wire.Length; ++i)
             {
                 var move = wire[i];
+                var segLength = Math.Abs(move.X) + Math.Abs(move.Y);
+                length += segLength;
                 var end = new Position { X = start.X + move.X, Y = start.Y + move.Y };
-                yield return new Line { Start = start, End = end };
+                yield return new Line { Start = start, End = end, TotalLength = length };
                 start = end;
             }
         }
@@ -132,9 +115,8 @@ namespace AdventOfCode2019.Days
 
         private struct Line
         {
+            public int TotalLength;
             public Position Start, End;
-
-            public int Length => (int) Math.Sqrt(Math.Pow(Start.X - End.X, 2) + Math.Pow(Start.Y - End.Y, 2));
 
             public Position? Intersection(Line other)
             {
