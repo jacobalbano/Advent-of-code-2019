@@ -1,24 +1,25 @@
 ﻿using AdventOfCode2019.Common;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace AdventOfCode2019.Days
 {
-    class Day2 : DayBase
+    class Day5 : DayBase
     {
         public override string Part1(string input)
         {
+            var sb = new StringBuilder();
             var vm = new Intcode();
             var asm = vm.Compile(input);
 
-            asm[1] = 12;
-            asm[2] = 2;
+            vm.ConnectInput(() => 1);
+            vm.ConnectOutput(x => sb.AppendLine(x.ToString()));
 
-            return string.Join("\r\n", vm.Run(asm));
+            vm.Run(asm);
+            return sb.ToString();
         }
 
         public override void Part1Test()
@@ -28,23 +29,15 @@ namespace AdventOfCode2019.Days
 
         public override string Part2(string input)
         {
-            var cartProd =
-                from noun in Enumerable.Range(0, 99)
-                from verb in Enumerable.Range(0, 99)
-                select new { Noun = noun, Verb = verb };
-            
+            var sb = new StringBuilder();
             var vm = new Intcode();
             var asm = vm.Compile(input);
 
-            foreach (var p in cartProd)
-            {
-                asm[1] = p.Noun;
-                asm[2] = p.Verb;
-                if (vm.Run(asm).First() == 19690720)
-                    return (100 * p.Noun + p.Verb).ToString();
-            }
+            vm.ConnectInput(() => 5);
+            vm.ConnectOutput(x => sb.AppendLine(x.ToString()));
 
-            throw new Exception("No solution found!");
+            vm.Run(asm);
+            return sb.ToString();
         }
 
         public override void Part2Test()

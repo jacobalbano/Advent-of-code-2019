@@ -16,38 +16,131 @@ namespace AdventOfCode2019.Common
             instructions = GetType()
                 .GetMethods(BindingFlags.Static | BindingFlags.NonPublic)
                 .Select(x => new { Method = x, Attribute = x.GetCustomAttribute<InstructionAttribute>() })
-                .ToDictionary(x => x.Attribute.Opcode, x => WrapInstruction(x.Method));
+                .Where(x => x.Attribute != null)
+                .ToDictionary(x => x.Attribute.Opcode, x => x.Method);
         }
+
+        public int[] Compile(string input)
+        {
+            return input.Split(',')
+                .Select(int.Parse)
+                .ToArray();
+        }
+
+        public void ConnectInput(Func<int> getInput) => GetInput = getInput;
+        public void ConnectOutput(Action<int> postOutput) => PostOutput = postOutput;
+
+        [Instruction(1)]
+        private static void Add(int a, int b, out int writeTo) => writeTo = a + b;
+
+        [Instruction(2)]
+        private static void Multiply(int a, int b, out int writeTo) => writeTo = a * b;
+
+        [Instruction(3)]
+        private static void Input(IController ctrl, out int writeTo) => writeTo = ctrl.Input();
+
+        [Instruction(4)]
+        private static void Output(IController ctrl, int value) => ctrl.Output(value);
+
+        [Instruction(5)]
+        private static void JumpIfTrue(IController ctrl, int bit, int address) { if (bit != 0) ctrl.Jump(address); }
+
+        [Instruction(6)]
+        private static void JumpIfFalse(IController ctrl, int bit, int address) { if (bit == 0) ctrl.Jump(address); }
+
+        [Instruction(7)]
+        private static void LessThan(int a, int b, out int writeTo) => writeTo = a < b ? 1 : 0;
+
+        [Instruction(8)]
+        private static void Equals(int a, int b, out int writeTo) => writeTo = a == b ? 1 : 0;
+
+        [Instruction(99)]
+        private static void Halt(IController ctrl) => ctrl.Halt();
 
         public int[] Run(int[] input)
         {
             var memory = (int[])input.Clone();
-            var ctrl = new Controller(memory);
+            var ctrl = new Controller(memory, GetInput, PostOutput);
 
             while (!ctrl.Halted)
             {
-                var opcode = ctrl.Read();
+                var instruction = ctrl.Read();
+
+                var opcode = instruction.ReadDigits(2);
+                var modes = instruction.SplitDigits().Skip(2).ToArray();
+
+                var context = new OperationContext(opcode, modes);
+
                 if (!instructions.TryGetValue(opcode, out var op))
                     throw new Exception($"Invalid operation {opcode}");
 
-                op(ctrl);
+                Execute(op, ctrl, context);
             }
 
             return memory;
         }
 
-        [Instruction(1)]
-        private static int Add(int a, int b) => a + b;
+        private void Execute(MethodInfo method, Controller ctrl, OperationContext context)
+        {
+            var pms = method.GetParameters();
+            var args = new object[pms.Length];
+            var outs = new Dictionary<int, int>(); //  methodParam to dest
 
-        [Instruction(2)]
-        private static int Multiply(int a, int b) => a * b;
+            for (int i = 0, p = 0; i < pms.Length; i++)
+            {
+                var param = pms[i];
+                var pType = param.ParameterType;
+                if (pType == typeof(IController))
+                    args[i] = ctrl;
+                else if (pType == typeof(int))
+                {
+                    var nextInt = ctrl.Read();
+                    switch (context.GetParamMode(p++))
+                    {
+                        case 0: nextInt = ctrl.ReadFrom(nextInt); break; // position
+                        case 1: break; // immediate
+                        default: throw new Exception($"Invalid parameter mode {context.GetParamMode(p)}");
+                    }
 
-        [Instruction(99)]
-        private static void Halt(IController ctrl) =>  ctrl.Halt();
+                    args[i] = nextInt;
+                }
+                else if (pType == typeof(int).MakeByRefType())
+                {
+                    outs.Add(i, ctrl.Read());
+                    p++;
+                }
+                else throw new Exception($"Unhandled parameter type {pType.Name}");
+            }
+
+            method.Invoke(null, args);
+            foreach (var p in outs)
+                ctrl.WriteTo(p.Value, (int)args[p.Key]);
+        }
 
         private interface IController
         {
             void Halt();
+            int Input();
+            void Output(int value);
+            void Jump(int address);
+        }
+
+        private class OperationContext
+        {
+            public int Opcode { get; }
+            public int[] ParamModes { get; }
+
+            public OperationContext(int opcode, int[] modes)
+            {
+                Opcode = opcode;
+                ParamModes = modes;
+            }
+
+            public int GetParamMode(int index)
+            {
+                if (index >= ParamModes.Length) return 0;
+                return ParamModes[index];
+            }
         }
 
         private class Controller : IController
@@ -58,29 +151,40 @@ namespace AdventOfCode2019.Common
 
             public int[] Memory { get; }
 
-            public Controller(int[] memory)
+            public Controller(int[] memory, Func<int> getInput, Action<int> postOutput)
             {
                 Memory = memory;
+                GetInput = getInput;
+                PostOutput = postOutput;
+            }
+            
+            public int Read() => Memory[InstructionPointer++];
+            public int ReadFrom(int address) => Memory[address];
+            public void WriteTo(int address, int value) => Memory[address] = value;
+
+            void IController.Halt()
+            {
+                halted = true;
             }
 
-            public void Halt() => halted = true;
-
-            public int Read()
+            int IController.Input()
             {
-                return Memory[InstructionPointer++];
+                return GetInput?.Invoke() ?? throw new Exception("Input is not connected");
             }
 
-            public int Read(int address)
+            void IController.Output(int value)
             {
-                return Memory[address];
+                PostOutput?.Invoke(value);
             }
 
-            public void Write(int address, int value)
+            void IController.Jump(int address)
             {
-                Memory[address] = value;
+                InstructionPointer = address;
             }
 
             private bool halted;
+            private Func<int> GetInput { get; }
+            private Action<int> PostOutput { get; }
         }
 
         private sealed class InstructionAttribute : Attribute
@@ -89,32 +193,9 @@ namespace AdventOfCode2019.Common
             public InstructionAttribute(int opcode) => Opcode = opcode;
         }
 
-        private OpHandler WrapInstruction(MethodInfo method)
-        {
-            var pms = method.GetParameters();
-            var ret = method.ReturnType;
-
-            if (ret == typeof(int) && pms.All(x => x.ParameterType == typeof(int)))
-                return BinaryInstruction;
-            else if (pms.Length == 1 && pms[0].ParameterType == typeof(IController))
-                return Passthrough;
-            else
-                throw new Exception($"Unknown signature for instruction method {method.Name}");
-
-            void BinaryInstruction(Controller ctrl)
-            {
-                int a = ctrl.Read(), b = ctrl.Read(), dest = ctrl.Read();
-                var args = new object[] { ctrl.Read(a), ctrl.Read(b) };
-                ctrl.Write(dest, (int)method.Invoke(null, args));
-            }
-
-            void Passthrough(Controller ctrl)
-            {
-                method.Invoke(null, new object[] { ctrl });
-            }
-        }
-
         private delegate void OpHandler(Controller ctrl);
-        private readonly Dictionary<int, OpHandler> instructions;
+        private readonly Dictionary<int, MethodInfo> instructions;
+        private Func<int> GetInput;
+        private Action<int> PostOutput;
     }
 }

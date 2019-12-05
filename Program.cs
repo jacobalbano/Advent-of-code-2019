@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AdventOfCode2019.Tests;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,10 @@ namespace AdventOfCode2019
         [STAThread]
         static void Main()
         {
+            IntcodeTests.RunAll();
+            DigitTests.RunAll();
+            
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());

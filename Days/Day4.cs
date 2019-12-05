@@ -54,7 +54,7 @@ namespace AdventOfCode2019.Days
             int maxDigit = 0, lastDigit = 0;
             for (int i = 6; i-- > 0;)
             {
-                var digit = password / pow10[i] % 10;
+                var digit = password.GetDigit(i);
                 if (digit < maxDigit)
                     return false;
                 else if (digit == lastDigit)
@@ -76,7 +76,7 @@ namespace AdventOfCode2019.Days
             int maxDigit = 0, lastDigit = 0;
             for (int i = 6; i-- > 0;)
             {
-                var digit = password / pow10[i] % 10;
+                var digit = password.GetDigit(i);
                 if (digit < maxDigit)
                     return false;
                 else if (digit == lastDigit)
@@ -91,9 +91,5 @@ namespace AdventOfCode2019.Days
 
             return neighbors.Any(x => x == 2);
         }
-
-        static readonly int[] pow10 = Enumerable.Range(0, 6)
-            .Select(x => (int) Math.Pow(10, x))
-            .ToArray();
     }
 }
