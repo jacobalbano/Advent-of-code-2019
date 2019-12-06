@@ -85,7 +85,7 @@ namespace AdventOfCode2019.Common
             var pms = method.GetParameters();
             var args = new object[pms.Length];
             var outs = new Dictionary<int, int>(); //  methodParam to dest
-            var rawMemory = new List<int>();
+            var rawMemory = new List<int> { context.Opcode };
 
             for (int i = 0, p = 0; i < pms.Length; i++)
             {

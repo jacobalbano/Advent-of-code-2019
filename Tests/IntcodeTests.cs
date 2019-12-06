@@ -89,43 +89,43 @@ namespace AdventOfCode2019.Tests
         [Test]
         private static void JustForFun()
         {
-            return;
-            var queue = new Queue<int>();
+            var stack = new Stack<int>();
             var outputBuffer = new List<int>();
 
             var generator = new Intcode();
             generator.ConnectInput(() => 10);
-            generator.ConnectOutput(x => queue.Enqueue(x));
+            generator.ConnectOutput(x => stack.Push(x));
 
             var squarer = new Intcode();
-            squarer.ConnectInput(() => queue.Dequeue());
+            squarer.ConnectInput(() => stack.Pop());
             squarer.ConnectOutput(x => outputBuffer.Add(x));
 
             generator.Run(new[] {
-                1005, 1, 6,      // jump to loop_start
+                1005, 0, 6,     // jump to loop_start
                 0,              // (pos 3) var a = 0
                 0,              // (pos 4) var b = 0,
                 0,              // (pos 5) var c = 0,
                 3, 3,           // [loop_start] a = input
-                4, 3,           // output b # start with zero
+                4, 4,           // output b # start with zero
                 8, 3, 4, 5,     // c = (a == b)
                 1001, 4, 1, 4,  // b = b + 1
-                105, 5, 6,     // jump to loop_start if c
+                1006, 5, 6,     // jump to loop_start if c
                 99
             });
 
             squarer.Run(new[] {
-                1005, 1, 5,      // jump to loop_start
+                1005, 0, 5,     // jump to loop_start
                 0,              // (pos 3) var a = 0
                 0,              // (pos 4) var b = 0
                 3, 3,           // [loop_start] a = input
                 2, 3, 3, 4,     // b = a * a
                 4, 4,           // output b
                 1001, 3, -1, 3, // a = a - 1
-                1005, 7,        // jump back to loop_start if a != 0
+                1005, 3, 5,     // jump back to loop_start if a != 0
                 99              //  halt
             });
 
+            Assert.ArraysMatch(new[] { 100, 81, 64, 49, 36, 25, 16, 9, 4, 1 }, outputBuffer.ToArray());
         }
     }
 }
