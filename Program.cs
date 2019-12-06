@@ -18,7 +18,6 @@ namespace AdventOfCode2019
             IntcodeTests.RunAll();
             DigitTests.RunAll();
             
-
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());

@@ -85,6 +85,7 @@ namespace AdventOfCode2019.Common
             var pms = method.GetParameters();
             var args = new object[pms.Length];
             var outs = new Dictionary<int, int>(); //  methodParam to dest
+            var rawMemory = new List<int>();
 
             for (int i = 0, p = 0; i < pms.Length; i++)
             {
@@ -95,6 +96,7 @@ namespace AdventOfCode2019.Common
                 else if (pType == typeof(int))
                 {
                     var nextInt = ctrl.Read();
+                    rawMemory.Add(nextInt);
                     switch (context.GetParamMode(p++))
                     {
                         case 0: nextInt = ctrl.ReadFrom(nextInt); break; // position
@@ -138,8 +140,7 @@ namespace AdventOfCode2019.Common
 
             public int GetParamMode(int index)
             {
-                if (index >= ParamModes.Length) return 0;
-                return ParamModes[index];
+                return index >= ParamModes.Length ? 0 : ParamModes[index];
             }
         }
 
