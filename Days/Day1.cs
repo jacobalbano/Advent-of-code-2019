@@ -13,7 +13,7 @@ namespace AdventOfCode2019.Days
     {
         public override string Part1(string input)
         {
-            return input.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+            return input.ToLines()
                 .Select(int.Parse)
                 .Select(FuelForMass)
                 .Sum()
@@ -31,7 +31,7 @@ namespace AdventOfCode2019.Days
 
         public override string Part2(string input)
         {
-            return input.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+            return input.ToLines()
                 .Select(int.Parse)
                 .Select(FuelForModule)
                 .Sum()

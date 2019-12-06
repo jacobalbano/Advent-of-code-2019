@@ -87,7 +87,7 @@ namespace AdventOfCode2019.Days
         private static Move[][] ParseScript(string input)
         {
             return input
-                .Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+                .ToLines()
                 .Select(x => x.Split(',').Select(Move.Parse).ToArray())
                 .ToArray();
         }
