@@ -13,7 +13,7 @@ namespace AdventOfCode2019.Days
         public override string Part1(string input)
         {
             var vm = new Intcode();
-            var asm = vm.Compile(input);
+            var asm = vm.FromSource(input);
 
             asm[1] = 12;
             asm[2] = 2;
@@ -34,7 +34,7 @@ namespace AdventOfCode2019.Days
                 select new { Noun = noun, Verb = verb };
             
             var vm = new Intcode();
-            var asm = vm.Compile(input);
+            var asm = vm.FromSource(input);
 
             foreach (var p in cartProd)
             {

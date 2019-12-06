@@ -13,7 +13,7 @@ namespace AdventOfCode2019.Days
         {
             var sb = new StringBuilder();
             var vm = new Intcode();
-            var asm = vm.Compile(input);
+            var asm = vm.FromSource(input);
 
             vm.ConnectInput(() => 1);
             vm.ConnectOutput(x => sb.AppendLine(x.ToString()));
@@ -31,7 +31,7 @@ namespace AdventOfCode2019.Days
         {
             var sb = new StringBuilder();
             var vm = new Intcode();
-            var asm = vm.Compile(input);
+            var asm = vm.FromSource(input);
 
             vm.ConnectInput(() => 5);
             vm.ConnectOutput(x => sb.AppendLine(x.ToString()));

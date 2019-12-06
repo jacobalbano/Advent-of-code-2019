@@ -58,7 +58,7 @@ namespace AdventOfCode2019.Tests
 
             foreach (var test in testValues)
             {
-                vm.Run(vm.Compile(test.Script));
+                vm.Run(vm.FromSource(test.Script));
                 Assert.AreEqual(result, test.Expected);
             }
         }
@@ -81,7 +81,7 @@ namespace AdventOfCode2019.Tests
 
             foreach (var test in testValues)
             {
-                vm.Run(vm.Compile(test.Script));
+                vm.Run(vm.FromSource(test.Script));
                 Assert.AreEqual(result, test.Expected);
             }
         }
@@ -126,6 +126,33 @@ namespace AdventOfCode2019.Tests
             });
 
             Assert.ArraysMatch(new[] { 100, 81, 64, 49, 36, 25, 16, 9, 4, 1 }, outputBuffer.ToArray());
+        }
+
+        [Test]
+        private static void TestAssembler()
+        {
+            var src = @"
+                # output all numbers from 0 to (input)
+                var a
+                var b
+                var c
+                loop_start:
+	                in -> a
+	                out b
+	                eq a b -> c
+	                add b 1 -> b
+	                fjmp c @loop_start
+
+                end";
+
+            var results = new List<int>();
+            var vm = new Intcode();
+            vm.ConnectInput(() => 5);
+            vm.ConnectOutput(results.Add);
+
+            var bytecode = vm.FromAssembly(src.ToLines());
+            var memory = vm.Run(bytecode);
+            Assert.ArraysMatch(results.ToArray(), new[] { 0, 1, 2, 3, 4, 5 });
         }
     }
 }
