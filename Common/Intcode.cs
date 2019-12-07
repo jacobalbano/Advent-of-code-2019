@@ -279,7 +279,7 @@ namespace AdventOfCode2019.Common
                         case LabelReference l:
                             if (!labels.TryGetValue(l.Name, out var lPos))
                                 throw new Exception($"Invalid label {l.Name}");
-                            yield return jumpOffset + lPos;
+                            yield return lPos + jumpOffset;
                             break;
                         case VariableDeclaration v:
                             yield return v.InitialValue;

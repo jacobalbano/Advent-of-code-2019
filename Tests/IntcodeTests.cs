@@ -154,5 +154,48 @@ namespace AdventOfCode2019.Tests
             var memory = vm.Run(bytecode);
             Assert.ArraysMatch(results.ToArray(), new[] { 0, 1, 2, 3, 4, 5 });
         }
+
+        [Test]
+        private static void TestFactorial()
+        {
+            Assert.AreEqual(1, Factorial(0));
+            Assert.AreEqual(1, Factorial(1));
+            Assert.AreEqual(2, Factorial(2));
+            Assert.AreEqual(6, Factorial(3));
+            Assert.AreEqual(24, Factorial(4));
+            Assert.AreEqual(120, Factorial(5));
+            Assert.AreEqual(720, Factorial(6));
+        }
+        
+        private static int Factorial(int input)
+        {
+            var src = @"
+                # factorial of input
+                var max
+                var it = 1
+                var fact = 1
+                var done
+                in -> max
+                fjmp max @done #early out if we get zero
+
+                loop:
+	                mul fact it -> fact
+	                eq max it -> done
+	                add it 1 -> it
+	                fjmp done @loop
+	
+
+                done:
+                    out fact
+                end";
+
+            int result = 0;
+            var vm = new Intcode();
+            vm.ConnectInput(() => input);
+            vm.ConnectOutput(x => result = x);
+            var bytecode = vm.FromAssembly(src.ToLines());
+            vm.Run(bytecode);
+            return result;
+        }
     }
 }
