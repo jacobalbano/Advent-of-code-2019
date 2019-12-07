@@ -10,4 +10,11 @@ public static class StringExtensions
     {
         return input.Split("\r\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
     }
+
+    public static string[] CSV(this string input)
+    {
+        return input.Split(",".ToCharArray(), StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim())
+            .ToArray();
+    }
 }

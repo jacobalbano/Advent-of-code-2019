@@ -176,7 +176,7 @@ namespace AdventOfCode2019.Tests
                 var fact = 1
                 var done
                 in -> max
-                fjmp max @done #early out if we get zero
+                fjmp max @done # early out if we get zero
 
                 loop:
 	                mul fact it -> fact
@@ -184,7 +184,6 @@ namespace AdventOfCode2019.Tests
 	                add it 1 -> it
 	                fjmp done @loop
 	
-
                 done:
                     out fact
                 end";
