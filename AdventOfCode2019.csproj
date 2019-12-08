@@ -49,6 +49,7 @@
     <Compile Include="Common\Assert.cs" />
     <Compile Include="Common\DictionaryExtensions.cs" />
     <Compile Include="Common\Digit.cs" />
+    <Compile Include="Common\EnumerableExtensions.cs" />
     <Compile Include="Common\Intcode.Assembler.cs" />
     <Compile Include="Common\Intcode.cs" />
     <Compile Include="Common\Intcode.ParallelController.cs" />
@@ -61,6 +62,7 @@
     <Compile Include="Days\Day5.cs" />
     <Compile Include="Days\Day6.cs" />
     <Compile Include="Days\Day7.cs" />
+    <Compile Include="Days\Day8.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

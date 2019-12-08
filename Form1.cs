@@ -62,7 +62,7 @@ namespace AdventOfCode2019
             for (int i = 0; i < 10 || totalTime.ElapsedMilliseconds < 150; i++)
             {
                 var timer = Stopwatch.StartNew();
-                var newResult = selectedOption.Run(txtInput.Text);
+                var newResult = selectedOption.Run(txtInput.Text.Trim());
                 time.Add(timer.Elapsed);
                 if (result != null && result != newResult)
                     throw new Exception($"Result differed between test runs! Old: {result}, New: {newResult}");
