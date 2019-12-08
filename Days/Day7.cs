@@ -74,6 +74,10 @@ namespace AdventOfCode2019.Days
                 .Select(x => { var q = new Queue<int>(); q.Enqueue(x); return q; })
                 .ToList();
 
+            //var wire = new IntcodeAsyncPipe(); wire.Write(0);
+
+
+
             for (int i = 0; i < sequence.Length; ++i)
             {
                 var vm = new Intcode();

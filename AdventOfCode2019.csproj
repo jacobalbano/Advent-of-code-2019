@@ -51,6 +51,8 @@
     <Compile Include="Common\Digit.cs" />
     <Compile Include="Common\Intcode.Assembler.cs" />
     <Compile Include="Common\Intcode.cs" />
+    <Compile Include="Common\Intcode.ParallelController.cs" />
+    <Compile Include="Common\Intcode.ParallelPipe.cs" />
     <Compile Include="Common\StringExtensions.cs" />
     <Compile Include="Days\Day1.cs" />
     <Compile Include="Days\Day2.cs" />

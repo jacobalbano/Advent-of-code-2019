@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -55,12 +56,39 @@ namespace AdventOfCode2019
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            e.Result = selectedOption.Run(txtInput.Text);
+            string result = null;
+            var time = new List<TimeSpan>(10);
+            var totalTime = Stopwatch.StartNew();
+            for (int i = 0; i < 10 || totalTime.ElapsedMilliseconds < 150; i++)
+            {
+                var timer = Stopwatch.StartNew();
+                var newResult = selectedOption.Run(txtInput.Text);
+                time.Add(timer.Elapsed);
+                if (result != null && result != newResult)
+                    throw new Exception($"Result differed between test runs! Old: {result}, New: {newResult}");
+
+                result = newResult;
+            }
+
+            e.Result = Tuple.Create(result, time);
         }
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            txtOutput.Text = (string) e.Result;
+            var tpus = TimeSpan.TicksPerMillisecond / 1000;
+            var result = (Tuple<string, List<TimeSpan>>)e.Result;
+            var output = result.Item1;
+            var times = result.Item2.Select(x => x.Ticks / tpus).ToList();
+            times.Sort();
+
+            var mean = (int) Math.Floor(times.Sum() / (float)times.Count);
+            var median = times[times.Count / 2];
+            string meanUnit = "μs", medianUnit = "μs";
+            if (mean > 1000) { mean /= 1000; meanUnit = "ms"; }
+            if (median > 1000) { median /= 1000; medianUnit = "ms"; }
+            
+            txtOutput.Text = result.Item1;
+            Text = $"AdventRunner - Last run: Reps({times.Count}) ・ Mean({mean}{meanUnit}) ・ Median({median}{medianUnit})";
             comboBox1.Enabled = button1.Enabled = true;
         }
 

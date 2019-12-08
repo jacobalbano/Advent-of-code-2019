@@ -71,6 +71,11 @@ namespace AdventOfCode2019.Common
             return RunUntilYield(input)
                 .Last().Memory;
         }
+        
+        public ParallelController RunParallel(int[] input)
+        {
+            throw new NotImplementedException();
+        }
 
         public enum YieldReason
         {
