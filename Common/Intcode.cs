@@ -24,55 +24,58 @@ namespace AdventOfCode2019.Common
             instructionsByName = methods.ToDictionary(x => x.Name);
         }
         
-        public int[] FromSource(string input)
+        public long[] FromSource(string input)
         {
             return input.Split(',')
-                .Select(int.Parse)
+                .Select(long.Parse)
                 .ToArray();
         }
 
-        public int[] FromAssembly(string[] lines)
+        public long[] FromAssembly(string[] lines)
         {
             return Assembler.Assemble(lines);
         }
 
-        public void ConnectInput(Func<int> getInput) => GetInput = getInput;
-        public void ConnectOutput(Action<int> postOutput) => PostOutput = postOutput;
+        public void ConnectInput(Func<long> getInput) => GetInput = getInput;
+        public void ConnectOutput(Action<long> postOutput) => PostOutput = postOutput;
 
         [Instruction("add", 1)]
-        private static void Add(int a, int b, out int writeTo) => writeTo = a + b;
+        private static void Add(long a, long b, out long writeTo) => writeTo = a + b;
 
         [Instruction("mul", 2)]
-        private static void Multiply(int a, int b, out int writeTo) => writeTo = a * b;
+        private static void Multiply(long a, long b, out long writeTo) => writeTo = a * b;
 
         [Instruction("in", 3)]
-        private static void Input(IController ctrl, out int writeTo) => writeTo = ctrl.Input();
+        private static void Input(IController ctrl, out long writeTo) => writeTo = ctrl.Input();
 
         [Instruction("out", 4)]
-        private static void Output(IController ctrl, int value) => ctrl.Output(value);
+        private static void Output(IController ctrl, long value) => ctrl.Output(value);
 
         [Instruction("tjmp", 5)]
-        private static void JumpIfTrue(IController ctrl, int bit, int address) { if (bit != 0) ctrl.Jump(address); }
+        private static void JumpIfTrue(IController ctrl, long bit, long address) { if (bit != 0) ctrl.Jump(address); }
 
         [Instruction("fjmp", 6)]
-        private static void JumpIfFalse(IController ctrl, int bit, int address) { if (bit == 0) ctrl.Jump(address); }
+        private static void JumpIfFalse(IController ctrl, long bit, long address) { if (bit == 0) ctrl.Jump(address); }
 
         [Instruction("lt", 7)]
-        private static void LessThan(int a, int b, out int writeTo) => writeTo = a < b ? 1 : 0;
+        private static void LessThan(long a, long b, out long writeTo) => writeTo = a < b ? 1 : 0;
 
         [Instruction("eq", 8)]
-        private static void Equals(int a, int b, out int writeTo) => writeTo = a == b ? 1 : 0;
+        private static void Equals(long a, long b, out long writeTo) => writeTo = a == b ? 1 : 0;
+
+        [Instruction("rbs", 9)]
+        private static void RelBase(IController ctrl, long a) => ctrl.AdjustRelativeBase(a);
 
         [Instruction("end", 99)]
         private static void Halt(IController ctrl) => ctrl.Halt();
 
-        public int[] Run(int[] input)
+        public long[] Run(long[] input)
         {
             return RunUntilYield(input)
                 .Last().Memory;
         }
         
-        public ParallelController RunParallel(int[] input)
+        public ParallelController RunParallel(long[] input)
         {
             throw new NotImplementedException();
         }
@@ -89,21 +92,21 @@ namespace AdventOfCode2019.Common
 
         public struct ExecutionState
         {
-            public int[] Memory { get; set; }
+            public long[] Memory { get; set; }
             public YieldReason State { get; set; }
         }
 
-        public IEnumerable<ExecutionState> RunUntilYield(int[] input)
+        public IEnumerable<ExecutionState> RunUntilYield(long[] input)
         {
-            var memory = (int[])input.Clone();
+            var memory = (long[])input.Clone();
             var ctrl = new Controller(memory, GetInput, PostOutput);
 
             while (!ctrl.Halted)
             {
-                var instruction = ctrl.Read();
+                var instruction = (int) ctrl.Read();
 
                 var opcode = instruction.ReadDigits(2);
-                var modes = instruction.SplitDigits().Skip(2).ToArray();
+                var modes = instruction.SplitDigits().Skip(2).Select(x => (int) x).ToArray();
 
                 var context = new OperationContext(opcode, modes);
 
@@ -140,16 +143,17 @@ namespace AdventOfCode2019.Common
         {
             var pms = method.GetParameters();
             var args = new object[pms.Length];
-            var outs = new Dictionary<int, int>(); //  methodParam to dest
-            var rawMemory = new List<int> { context.Opcode };
-
+            var modes = new int[args.Length];
+            var outs = new Dictionary<int, long>(); //  methodParam to dest
+            var rawMemory = new List<long> { context.Opcode };
+            
             for (int i = 0, p = 0; i < pms.Length; i++)
             {
                 var param = pms[i];
                 var pType = param.ParameterType;
                 if (pType == typeof(IController))
                     args[i] = ctrl;
-                else if (pType == typeof(int))
+                else if (pType == typeof(long))
                 {
                     var nextInt = ctrl.Read();
                     rawMemory.Add(nextInt);
@@ -157,44 +161,52 @@ namespace AdventOfCode2019.Common
                     {
                         case 0: nextInt = ctrl.ReadFrom(nextInt); break; // position
                         case 1: break; // immediate
+                        case 2: nextInt = ctrl.ReadFromRelativeBase(nextInt); break; // relative
                         default: throw new Exception($"Invalid parameter mode {context.GetParamMode(p)}");
                     }
 
                     args[i] = nextInt;
                 }
-                else if (pType == typeof(int).MakeByRefType())
+                else if (pType == typeof(long).MakeByRefType())
                 {
                     outs.Add(i, ctrl.Read());
-                    p++;
+                    modes[i] = (int) context.GetParamMode(p++);
                 }
                 else throw new Exception($"Unhandled parameter type {pType.Name}");
             }
 
             method.Invoke(null, args);
             foreach (var p in outs)
-                ctrl.WriteTo(p.Value, (int)args[p.Key]);
+            {
+                var paramMode = modes[p.Key];
+                if (paramMode == 2)
+                    ctrl.WriteToRelativeBase(p.Value, (long)args[p.Key]);
+                else
+                    ctrl.WriteTo(p.Value, (long)args[p.Key]);
+            }
         }
 
         private interface IController
         {
             void Halt();
-            int Input();
-            void Output(int value);
-            void Jump(int address);
+            long Input();
+            void Output(long value);
+            void Jump(long address);
+            void AdjustRelativeBase(long a);
         }
 
         private class OperationContext
         {
-            public int Opcode { get; }
+            public long Opcode { get; }
             public int[] ParamModes { get; }
 
-            public OperationContext(int opcode, int[] modes)
+            public OperationContext(long opcode, int[] modes)
             {
                 Opcode = opcode;
                 ParamModes = modes;
             }
 
-            public int GetParamMode(int index)
+            public long GetParamMode(int index)
             {
                 return index >= ParamModes.Length ? 0 : ParamModes[index];
             }
@@ -202,53 +214,79 @@ namespace AdventOfCode2019.Common
 
         private class Controller : IController
         {
-            public int InstructionPointer { get; private set; }
+            public long InstructionPointer { get; private set; }
 
-            public bool Halted => halted || InstructionPointer >= Memory.Length;
+            public bool Halted => halted || InstructionPointer >= InitialProgram.Length;
 
-            public int[] Memory { get; }
+            public long[] InitialProgram { get; }
 
-            public Controller(int[] memory, Func<int> getInput, Action<int> postOutput)
+            private Dictionary<long, long> ExpandedMemory { get; }
+
+            public Controller(long[] memory, Func<long> getInput, Action<long> postOutput)
             {
-                Memory = memory;
+                InitialProgram = memory;
                 GetInput = getInput;
                 PostOutput = postOutput;
+                ExpandedMemory = new Dictionary<long, long>();
             }
             
-            public int Read() => Memory[InstructionPointer++];
-            public int ReadFrom(int address) => Memory[address];
-            public void WriteTo(int address, int value) => Memory[address] = value;
+            public long Read() => MemGet(InstructionPointer++);
+            public long ReadFrom(long address) => MemGet(address);
+            public long ReadFromRelativeBase(long address) => MemGet(relBase + address);
+            public void WriteTo(long address, long value) => MemSet(address, value);
+            public void WriteToRelativeBase(long address, long value) => MemSet(relBase + address, value);
+
+            private long MemGet(long address)
+            {
+                return address < InitialProgram.Length ?
+                    InitialProgram[address] :
+                    ExpandedMemory.GetOrCreate(address, key => 0);
+            }
+
+            private void MemSet(long address, long value)
+            {
+                if (address < InitialProgram.Length)
+                    InitialProgram[address] = value;
+                else
+                    ExpandedMemory[address] = value;
+            }
 
             void IController.Halt()
             {
                 halted = true;
             }
 
-            int IController.Input()
+            long IController.Input()
             {
                 return GetInput?.Invoke() ?? throw new Exception("Input is not connected");
             }
 
-            void IController.Output(int value)
+            void IController.Output(long value)
             {
                 PostOutput?.Invoke(value);
             }
 
-            void IController.Jump(int address)
+            void IController.Jump(long address)
             {
                 InstructionPointer = address;
             }
 
+            void IController.AdjustRelativeBase(long a)
+            {
+                relBase += a;
+            }
+
             private bool halted;
-            private Func<int> GetInput { get; }
-            private Action<int> PostOutput { get; }
+            private long relBase;
+            private Func<long> GetInput { get; }
+            private Action<long> PostOutput { get; }
         }
 
         private sealed class InstructionAttribute : Attribute
         {
             public string AsmName { get; }
-            public int Opcode { get; }
-            public InstructionAttribute(string asmName, int opcode)
+            public long Opcode { get; }
+            public InstructionAttribute(string asmName, long opcode)
             {
                 AsmName = asmName;
                 Opcode = opcode;
@@ -258,10 +296,10 @@ namespace AdventOfCode2019.Common
         private class InstructionInfo
         {
             public string Name { get; }
-            public int Opcode { get; }
+            public long Opcode { get; }
             public MethodInfo Method { get; }
 
-            public InstructionInfo(string name, int opcode, MethodInfo method)
+            public InstructionInfo(string name, long opcode, MethodInfo method)
             {
                 Name = name;
                 Opcode = opcode;
@@ -270,9 +308,9 @@ namespace AdventOfCode2019.Common
         }
 
         private delegate void OpHandler(Controller ctrl);
-        private static readonly Dictionary<int, InstructionInfo> instructionsByOpcode;
+        private static readonly Dictionary<long, InstructionInfo> instructionsByOpcode;
         private static readonly Dictionary<string, InstructionInfo> instructionsByName;
-        private Func<int> GetInput;
-        private Action<int> PostOutput;
+        private Func<long> GetInput;
+        private Action<long> PostOutput;
     }
 }

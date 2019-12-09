@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 public static class Assert
 {
-    public static void ArraysMatch(int[] expected, int[] actual)
+    public static void ArraysMatch<T>(T[] expected, T[] actual)
     {
         if (expected.Length != actual.Length)
             throw new AssertionFailure("expected and actual had different lengths");
 
         for (int i = 0; i < expected.Length; i++)
-            IsTrue(expected[i] == actual[i], $"expected and actual differ at position {i} ({expected[i]}) vs {actual[i]})");
+            IsTrue(Equals(expected[i], actual[i]), $"expected and actual differ at position {i} ({expected[i]}) vs {actual[i]})");
     }
 
     public static void IsTrue(bool condition, string message)

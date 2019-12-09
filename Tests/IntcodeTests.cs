@@ -15,10 +15,10 @@ namespace AdventOfCode2019.Tests
         {
             var testValues = new[]
             {
-                new { Input = new[] { 1, 0, 0, 0, 99 }, Output = new[] { 2, 0, 0, 0, 99 } },
-                new { Input = new[] { 2, 3, 0, 3, 99 }, Output = new[] { 2, 3, 0, 6, 99 } },
-                new { Input = new[] { 2, 4, 4, 5, 99, 0 }, Output = new[] { 2, 4, 4, 5, 99, 9801 } },
-                new { Input = new[] { 1, 1, 1, 4, 99, 5, 6, 0, 99 }, Output = new[] { 30, 1, 1, 4, 2, 5, 6, 0, 99 } }
+                new { Input = new long[] { 1, 0, 0, 0, 99 }, Output = new long[] { 2, 0, 0, 0, 99 } },
+                new { Input = new long[] { 2, 3, 0, 3, 99 }, Output = new long[] { 2, 3, 0, 6, 99 } },
+                new { Input = new long[] { 2, 4, 4, 5, 99, 0 }, Output = new long[] { 2, 4, 4, 5, 99, 9801 } },
+                new { Input = new long[] { 1, 1, 1, 4, 99, 5, 6, 0, 99 }, Output = new long[] { 30, 1, 1, 4, 2, 5, 6, 0, 99 } }
             };
 
             foreach (var test in testValues)
@@ -33,8 +33,8 @@ namespace AdventOfCode2019.Tests
         private static void InstructionSet2_ValidateImmediateMode()
         {
             var vm = new Intcode();
-            var bytecode = new[] { 1002, 4, 3, 4, 33 };
-            var expected = new[] { 1002, 4, 3, 4, 99 };
+            var bytecode = new long[] { 1002, 4, 3, 4, 33 };
+            var expected = new long[] { 1002, 4, 3, 4, 99 };
 
             var result = vm.Run(bytecode);
             Assert.ArraysMatch(result, expected);
@@ -43,7 +43,7 @@ namespace AdventOfCode2019.Tests
         [Test]
         private static void InstructionSet3_ValidateImmediateMode1()
         {
-            int result = 0;
+            long result = 0;
             var vm = new Intcode();
             vm.ConnectOutput(x => result = x);
             vm.ConnectInput(() => 8);
@@ -66,7 +66,7 @@ namespace AdventOfCode2019.Tests
         [Test]
         private static void InstructionSet3_ValidateImmediateMode2()
         {
-            int result = 0;
+            long result = 0;
             var vm = new Intcode();
             vm.ConnectOutput(x => result = x);
             vm.ConnectInput(() => 3);
@@ -89,8 +89,8 @@ namespace AdventOfCode2019.Tests
         [Test]
         private static void JustForFun()
         {
-            var stack = new Stack<int>();
-            var outputBuffer = new List<int>();
+            var stack = new Stack<long>();
+            var outputBuffer = new List<long>();
 
             var generator = new Intcode();
             generator.ConnectInput(() => 10);
@@ -100,7 +100,7 @@ namespace AdventOfCode2019.Tests
             squarer.ConnectInput(() => stack.Pop());
             squarer.ConnectOutput(x => outputBuffer.Add(x));
 
-            generator.Run(new[] {
+            generator.Run(new long[] {
                 1005, 0, 6,     // jump to loop_start
                 0,              // (pos 3) var a = 0
                 0,              // (pos 4) var b = 0,
@@ -113,7 +113,7 @@ namespace AdventOfCode2019.Tests
                 99
             });
 
-            squarer.Run(new[] {
+            squarer.Run(new long[] {
                 1005, 0, 5,     // jump to loop_start
                 0,              // (pos 3) var a = 0
                 0,              // (pos 4) var b = 0
@@ -125,7 +125,7 @@ namespace AdventOfCode2019.Tests
                 99              //  halt
             });
 
-            Assert.ArraysMatch(new[] { 100, 81, 64, 49, 36, 25, 16, 9, 4, 1 }, outputBuffer.ToArray());
+            Assert.ArraysMatch(new long[] { 100, 81, 64, 49, 36, 25, 16, 9, 4, 1 }, outputBuffer.ToArray());
         }
 
         [Test]
@@ -145,14 +145,14 @@ namespace AdventOfCode2019.Tests
 
                 end";
 
-            var results = new List<int>();
+            var results = new List<long>();
             var vm = new Intcode();
             vm.ConnectInput(() => 5);
             vm.ConnectOutput(results.Add);
 
             var bytecode = vm.FromAssembly(src.ToLines());
             var memory = vm.Run(bytecode);
-            Assert.ArraysMatch(results.ToArray(), new[] { 0, 1, 2, 3, 4, 5 });
+            Assert.ArraysMatch(results.ToArray(), new long[] { 0, 1, 2, 3, 4, 5 });
         }
 
         [Test]
@@ -167,7 +167,7 @@ namespace AdventOfCode2019.Tests
             Assert.AreEqual(720, Factorial(6));
         }
         
-        private static int Factorial(int input)
+        private static long Factorial(int input)
         {
             var src = @"
                 # factorial of input
@@ -188,7 +188,7 @@ namespace AdventOfCode2019.Tests
                     out fact
                 end";
 
-            int result = 0;
+            long result = 0;
             var vm = new Intcode();
             vm.ConnectInput(() => input);
             vm.ConnectOutput(x => result = x);

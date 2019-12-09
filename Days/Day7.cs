@@ -27,7 +27,7 @@ namespace AdventOfCode2019.Days
 
         public override string Part2(string input)
         {
-            var max = GetPermutations(new[] { 5, 6, 7, 8, 9 }, 5)
+            var max = GetPermutations(new long[] { 5, 6, 7, 8, 9 }, 5)
                 .Select(x => RunAmplifierLoop(x, input))
                 .Max();
 
@@ -36,8 +36,8 @@ namespace AdventOfCode2019.Days
 
         public override void Part2Test()
         {
-            Assert.AreEqual(139629729, RunAmplifierLoop(new[] { 9, 8, 7, 6, 5 }, "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5"));
-            Assert.AreEqual(18216, RunAmplifierLoop(new[] { 9, 7, 8, 5, 6 }, "3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10"));
+            Assert.AreEqual(139629729, RunAmplifierLoop(new long[] { 9, 8, 7, 6, 5 }, "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5"));
+            Assert.AreEqual(18216, RunAmplifierLoop(new long[] { 9, 7, 8, 5, 6 }, "3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10"));
         }
 
         private static IEnumerable<T[]> GetPermutations<T>(T[] list, int length)
@@ -47,13 +47,13 @@ namespace AdventOfCode2019.Days
                 .SelectMany(t => list.Where(o => !t.Contains(o)), (t1, t2) => t1.Concat(new[] { t2 }).ToArray());
         }
 
-        private static int RunAmplifierSequence(int[] sequence, string program)
+        private static long RunAmplifierSequence(int[] sequence, string program)
         {
-            int output = 0;
+            long output = 0;
             for (int i = 0; i < sequence.Length; ++i)
             {
                 var input = sequence[i];
-                var queue = new Queue<int>();
+                var queue = new Queue<long>();
                 queue.Enqueue(input);
                 queue.Enqueue(output);
 
@@ -67,11 +67,11 @@ namespace AdventOfCode2019.Days
             return output;
         }
 
-        private static int RunAmplifierLoop(int[] sequence, string program)
+        private static long RunAmplifierLoop(long[] sequence, string program)
         {
             var amps = new List<IEnumerator<Intcode.ExecutionState>>();
             var queues = sequence
-                .Select(x => { var q = new Queue<int>(); q.Enqueue(x); return q; })
+                .Select(x => { var q = new Queue<long>(); q.Enqueue(x); return q; })
                 .ToList();
 
             //var wire = new IntcodeAsyncPipe(); wire.Write(0);

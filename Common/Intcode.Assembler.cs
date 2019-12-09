@@ -9,18 +9,18 @@ namespace AdventOfCode2019.Common
     {
         private static class Assembler
         {
-            public static int[] Assemble(string[] lines)
+            public static long[] Assemble(string[] lines)
             {
                 return YieldIntcode(lines)
                     .ToArray();
             }
 
-            private static IEnumerable<int> YieldIntcode(string[] lines)
+            private static IEnumerable<long> YieldIntcode(string[] lines)
             {
                 var symbols = new List<Symbol>();
-                var labels = new Dictionary<string, int>();
-                var variables = new Dictionary<string, int>();
-                int offset = 0;
+                var labels = new Dictionary<string, long>();
+                var variables = new Dictionary<string, long>();
+                long offset = 0;
 
                 foreach (var sym in Symbolize(lines))
                 {
@@ -33,7 +33,7 @@ namespace AdventOfCode2019.Common
                     symbols.Add(sym);
                 }
 
-                int jumpOffset = 0;
+                long jumpOffset = 0;
                 if (variables.Count > 0)
                 {
                     jumpOffset = 3;
@@ -104,22 +104,22 @@ namespace AdventOfCode2019.Common
                 var args = instr.Method.GetParameters();
                 foreach (var arg in args)
                 {
-                    if (arg.ParameterType == typeof(int))
+                    if (arg.ParameterType == typeof(long))
                     {
                         ++paramDigit;
                         if (!e.MoveNext())
                             throw new Exception($"Incomplete statement: {line}");
 
-                        if (int.TryParse(e.Current, out var iValue))
+                        if (long.TryParse(e.Current, out var iValue))
                         {
                             //  parameter mode
-                            currentInstruction.Opcode += (int) Math.Pow(10, paramDigit);
+                            currentInstruction.Opcode += (long) Math.Pow(10, paramDigit);
                             yield return new Literal { Value = iValue };
                         }
                         else if (labelReference.IsMatch(e.Current))
                         {
                             //  parameter mode
-                            currentInstruction.Opcode += (int)Math.Pow(10, paramDigit);
+                            currentInstruction.Opcode += (long)Math.Pow(10, paramDigit);
                             yield return new LabelReference(e.Current);
                         }
                         else if (variableReference.IsMatch(e.Current))
@@ -127,7 +127,7 @@ namespace AdventOfCode2019.Common
                         else
                             throw new Exception($"Invalid statement: {line}");
                     }
-                    else if (arg.ParameterType == typeof(int).MakeByRefType())
+                    else if (arg.ParameterType == typeof(long).MakeByRefType())
                     {
                         if (!e.MoveNext()) throw new Exception($"Incomplete statement: {line}");
                         if (e.Current != "->") throw new Exception($"Invalid statement: {line}");
@@ -154,7 +154,7 @@ namespace AdventOfCode2019.Common
 
             private class Literal : Symbol
             {
-                public int Value { get; set; }
+                public long Value { get; set; }
             }
 
             private class LabelDeclaration : Symbol
@@ -182,13 +182,13 @@ namespace AdventOfCode2019.Common
             private class VariableDeclaration : Symbol
             {
                 public string Name { get; set; }
-                public int InitialValue { get; set; }
+                public long InitialValue { get; set; }
 
                 public VariableDeclaration(string line)
                 {
                     var match = variableDeclaration.Match(line);
                     Name = match.Groups[1].Value;
-                    if (int.TryParse(match.Groups[2].Value, out var iValue))
+                    if (long.TryParse(match.Groups[2].Value, out var iValue))
                         InitialValue = iValue;
                 }
             }
@@ -200,7 +200,7 @@ namespace AdventOfCode2019.Common
 
             private class Instruction : Symbol
             {
-                public int Opcode { get; set; }
+                public long Opcode { get; set; }
             }
 
             private static readonly Regex labelDeclaration = new Regex(@"(\w+):", RegexOptions.Compiled);

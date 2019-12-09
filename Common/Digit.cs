@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 public static class Digit
 {
     public static int CountDigits(this int self) => self == 0 ? 0 : CountDigits(self / 10) + 1;
+    public static long CountDigits(this long self) => self == 0 ? 0 : CountDigits(self / 10) + 1;
 
     public static int GetDigit(this int self, int digit) => self / pow10[digit] % 10;
 
